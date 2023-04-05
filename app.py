@@ -1,9 +1,8 @@
 import os
 import re
-import aiohttp
+import asyncio
 
 from slack_sdk import WebClient
-
 from slack_bolt.app.async_app import AsyncApp
 from slack_bolt.adapter.socket_mode.async_handler import AsyncSocketModeHandler
 import openai
@@ -34,20 +33,8 @@ async def generate_answer(messages):
     for message in messages:
         input.append({"role": message.role, "content": message.content})
 
-    async with aiohttp.ClientSession() as session:
-        async with session.post(
-            "https://api.openai.com/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {openai.api_key}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "model": MODEL_NAME,
-                "messages": input,
-            },
-        ) as resp:
-            resp_data = await resp.json()
-            return resp_data["choices"][0]["message"]["content"]
+    completion = await openai.ChatCompletion.acreate(model=MODEL_NAME, messages=input)
+    return completion.choices[0].message["content"]
 
 
 @app.event("app_mention")
@@ -98,6 +85,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    import asyncio
-
     asyncio.run(main())
