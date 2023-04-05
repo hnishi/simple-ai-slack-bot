@@ -18,8 +18,11 @@ app = App(token=slack_bot_token)
 
 session = create_session()
 
-SYSTEM_PROMPT = """
-あなたは有能な Slack Bot です。
+MODEL_NAME = "gpt-3.5-turbo"
+
+SYSTEM_PROMPT = f"""
+あなたは OpenAI API の {MODEL_NAME} モデルを利用した有能な Slack Bot です。
+あなたの Bot ID は {bot_id} です。
 以後、スレッドのメッセージが全て渡されます。
 最後のメッセージに対して応答してください。
 """
@@ -29,7 +32,7 @@ def generate_answer(messages):
     input = [{"role": "system", "content": SYSTEM_PROMPT}]
     for message in messages:
         input.append({"role": message.role, "content": message.content})
-    completion = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=input)
+    completion = openai.ChatCompletion.create(model=MODEL_NAME, messages=input)
     return completion.choices[0].message["content"]
 
 
