@@ -35,7 +35,7 @@ async def generate_answer(messages):
         input.append({"role": message.role, "content": message.content})
 
     async with aiohttp.ClientSession() as session:
-        response = await session.post(
+        async with session.post(
             "https://api.openai.com/v1/chat/completions",
             headers={
                 "Authorization": f"Bearer {openai.api_key}",
@@ -45,9 +45,9 @@ async def generate_answer(messages):
                 "model": MODEL_NAME,
                 "messages": input,
             },
-        )
-        response_data = await response.json()
-        return response_data["choices"][0]["message"]["content"]
+        ) as resp:
+            resp_data = await resp.json()
+            return resp_data["choices"][0]["message"]["content"]
 
 
 @app.event("app_mention")
