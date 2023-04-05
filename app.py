@@ -10,6 +10,7 @@ from database import create_session, Message
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 slack_bot_token = os.getenv("SLACK_BOT_TOKEN")
+slack_app_token = os.getenv("SLACK_APP_TOKEN")
 
 bot_id = WebClient(token=slack_bot_token).auth_test()["user_id"]
 
@@ -75,4 +76,4 @@ def handle_mentions(event, say):
 
 
 if __name__ == "__main__":
-    SocketModeHandler(app, os.environ["SLACK_APP_TOKEN"]).start()
+    SocketModeHandler(app, slack_app_token).start()

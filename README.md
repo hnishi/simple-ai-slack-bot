@@ -25,6 +25,7 @@
 
     ```shell
     export SLACK_BOT_TOKEN=xoxb-xxx
+    export SLACK_APP_TOKEN=xapp-xxx
     export OPENAI_API_KEY=xxx
     ```
 
