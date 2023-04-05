@@ -1,9 +1,11 @@
 import os
 import re
+import aiohttp
 
 from slack_sdk import WebClient
-from slack_bolt import App
-from slack_bolt.adapter.socket_mode import SocketModeHandler
+
+from slack_bolt.app.async_app import AsyncApp
+from slack_bolt.adapter.socket_mode.async_handler import AsyncSocketModeHandler
 import openai
 
 from database import create_session, Message
@@ -14,9 +16,11 @@ slack_app_token = os.getenv("SLACK_APP_TOKEN")
 
 bot_id = WebClient(token=slack_bot_token).auth_test()["user_id"]
 
-app = App(token=slack_bot_token)
+app = AsyncApp(token=slack_bot_token)
 
 session = create_session()
+
+MODEL_NAME = "gpt-3.5-turbo"
 
 SYSTEM_PROMPT = """
 あなたは有能な Slack Bot です。
@@ -25,16 +29,29 @@ SYSTEM_PROMPT = """
 """
 
 
-def generate_answer(messages):
+async def generate_answer(messages):
     input = [{"role": "system", "content": SYSTEM_PROMPT}]
     for message in messages:
         input.append({"role": message.role, "content": message.content})
-    completion = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=input)
-    return completion.choices[0].message["content"]
+
+    async with aiohttp.ClientSession() as session:
+        response = await session.post(
+            "https://api.openai.com/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {openai.api_key}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": MODEL_NAME,
+                "messages": input,
+            },
+        )
+        response_data = await response.json()
+        return response_data["choices"][0]["message"]["content"]
 
 
 @app.event("app_mention")
-def handle_mentions(event, say):
+async def handle_mentions(event, say):
     channel_id = event["channel"]
     thread_ts = event.get("thread_ts", event["ts"])
     user_id = event["user"]
@@ -60,8 +77,8 @@ def handle_mentions(event, say):
         .all()
     )
 
-    answer = generate_answer(messages)
-    say(text=answer, thread_ts=thread_ts)
+    answer = await generate_answer(messages)
+    await say(text=answer, thread_ts=thread_ts)
 
     assistant_message = Message(
         channel_id=channel_id,
@@ -75,5 +92,12 @@ def handle_mentions(event, say):
     session.commit()
 
 
+async def main():
+    handler = AsyncSocketModeHandler(app, slack_app_token)
+    await handler.start_async()
+
+
 if __name__ == "__main__":
-    SocketModeHandler(app, slack_app_token).start()
+    import asyncio
+
+    asyncio.run(main())
