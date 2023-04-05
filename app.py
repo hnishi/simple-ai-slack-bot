@@ -32,8 +32,11 @@ def generate_answer(messages):
     input = [{"role": "system", "content": SYSTEM_PROMPT}]
     for message in messages:
         input.append({"role": message.role, "content": message.content})
-    completion = openai.ChatCompletion.create(model=MODEL_NAME, messages=input)
-    return completion.choices[0].message["content"]
+    try:
+        completion = openai.ChatCompletion.create(model=MODEL_NAME, messages=input)
+        return completion.choices[0].message["content"]
+    except openai.error.InvalidRequestError as e:
+        return str(e)
 
 
 @app.event("app_mention")
