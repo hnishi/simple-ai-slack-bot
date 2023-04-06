@@ -32,7 +32,7 @@ def generate_answer(messages):
     total_content_length = len(SYSTEM_PROMPT)
     for message in reversed(messages):
         # 言語によって1文字あたりのトークン数が違い、文字数からの推定が難しいため概算を使う
-        if total_content_length + len(message.content) > MODEL_MAX_TOKEN_LENGTH / 2:
+        if total_content_length + len(message.content) > MODEL_MAX_TOKEN_LENGTH * 0.333:
             break
         input.insert(1, {"role": message.role, "content": message.content})
     try:
