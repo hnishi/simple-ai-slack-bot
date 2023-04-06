@@ -5,6 +5,7 @@ from slack_sdk import WebClient
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 import openai
+import tiktoken
 
 from database import create_session, Message
 
@@ -28,13 +29,16 @@ SYSTEM_PROMPT = f"""
 
 
 def generate_answer(messages):
+    enc = tiktoken.encoding_for_model(MODEL_NAME)
     input = [{"role": "system", "content": SYSTEM_PROMPT}]
-    total_content_length = len(SYSTEM_PROMPT)
+    total_token_length = len(enc.encode(SYSTEM_PROMPT))
     for message in reversed(messages):
+        token_length = len(enc.encode(message.content))
         # 言語によって1文字あたりのトークン数が違い、文字数からの推定が難しいため概算を使う
-        if total_content_length + len(message.content) > MODEL_MAX_TOKEN_LENGTH * 0.333:
+        if total_token_length + token_length > MODEL_MAX_TOKEN_LENGTH:
             break
         input.insert(1, {"role": message.role, "content": message.content})
+        total_token_length += token_length
     try:
         completion = openai.ChatCompletion.create(model=MODEL_NAME, messages=input)
         return completion.choices[0].message["content"]
