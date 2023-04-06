@@ -34,8 +34,8 @@ def generate_answer(messages):
     total_token_length = len(enc.encode(SYSTEM_PROMPT))
     for message in reversed(messages):
         token_length = len(enc.encode(message.content))
-        # 言語によって1文字あたりのトークン数が違い、文字数からの推定が難しいため概算を使う
-        if total_token_length + token_length > MODEL_MAX_TOKEN_LENGTH:
+        # なぜかOpenAIサーバー側のトークンカウントと微妙に一致しないため、係数 0.9 を使う
+        if total_token_length + token_length > MODEL_MAX_TOKEN_LENGTH * 0.9:
             break
         input.insert(1, {"role": message.role, "content": message.content})
         total_token_length += token_length
