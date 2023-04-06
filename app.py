@@ -44,6 +44,8 @@ def generate_answer(messages):
         return completion.choices[0].message["content"]
     except openai.error.InvalidRequestError as e:
         return str(e)
+    except openai.error.APIError:
+        return "OpenAI API サーバーがエラーを返しました。時間を置いて再度お試しください。"
 
 
 @app.event("app_mention")
