@@ -1,13 +1,13 @@
 import os
 import re
 
-from slack_sdk import WebClient
-from slack_bolt import App
-from slack_bolt.adapter.socket_mode import SocketModeHandler
 import openai
 import tiktoken
+from slack_bolt import App
+from slack_bolt.adapter.socket_mode import SocketModeHandler
+from slack_sdk import WebClient
 
-from database import create_session, Message
+from database import Message, create_session
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 slack_bot_token = os.getenv("SLACK_BOT_TOKEN")
@@ -19,8 +19,10 @@ app = App(token=slack_bot_token)
 
 session = create_session()
 
-MODEL_NAME = "gpt-3.5-turbo"
-MODEL_MAX_TOKEN_LENGTH = 4097
+# MODEL_NAME = "gpt-3.5-turbo"
+# MODEL_MAX_TOKEN_LENGTH = 4097
+MODEL_NAME = "gpt-4"
+MODEL_MAX_TOKEN_LENGTH = 8192
 
 SYSTEM_PROMPT = f"""
 あなたは OpenAI API の {MODEL_NAME} モデルを利用した有能な Slack Bot です。
@@ -43,9 +45,13 @@ def generate_answer(messages):
         completion = openai.ChatCompletion.create(model=MODEL_NAME, messages=input)
         return completion.choices[0].message["content"]
     except openai.error.InvalidRequestError as e:
-        return str(e)
-    except openai.error.APIError:
-        return "OpenAI API サーバーがエラーを返しました。時間を置いて再度お試しください。"
+        return "OpenAI API に対する無効なリクエストです。\nエラー詳細: " + str(e)
+    except openai.error.APIError as e:
+        return "OpenAI API サーバーが API エラーを返しました。時間を置いて再度お試しください。\nエラー詳細: " + str(e)
+    except openai.error.RateLimitError as e:
+        return "OpenAI API サーバーがレート制限エラーを返しました。\nエラー詳細: " + str(e)
+    except Exception as e:
+        return "OpenAI API サーバーがエラーを返しました。\nエラー詳細: " + str(e)
 
 
 @app.event("app_mention")
