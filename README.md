@@ -23,6 +23,11 @@
 
     - app_mentions:read
 
+1. Messages Tab
+
+    - App Home --> Show Tabs --> Messages Tab
+    - Check `Allow users to send Slash commands and messages from the messages tab`
+
 ## Usage
 
 ### Prerequisites
