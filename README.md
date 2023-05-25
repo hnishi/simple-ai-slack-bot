@@ -19,6 +19,10 @@
 
     - connections:write
 
+1. Event Subscriptions (Subscribe to bot events)
+
+    - app_mentions:read
+
 ## Usage
 
 ### Prerequisites
