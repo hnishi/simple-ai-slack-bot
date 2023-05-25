@@ -1,6 +1,18 @@
 # gpt-slack-bot
 
-## Slack
+You can talk to the chat bot using OpenAI Chat API via Slack.
+
+## Features
+
+### Public and private channels in which the bot is added
+
+You have to mention the bot to talk to it.
+
+### Direct messages to the bot
+
+You can talk to the bot without mentioning it.
+
+## Slack App Configuration
 
 1. Create an Slack app
 
@@ -14,6 +26,9 @@
 
     - app_mentions:read
     - chat:write
+    - im:history
+    - im:read
+    - im:write
 
 1. App Token Scopes
 
@@ -22,6 +37,7 @@
 1. Event Subscriptions (Subscribe to bot events)
 
     - app_mentions:read
+    - message.im
 
 1. Messages Tab
 
