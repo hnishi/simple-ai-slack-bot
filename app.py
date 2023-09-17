@@ -1,99 +1,27 @@
-import os
-import re
-
-import openai
-import tiktoken
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
-from slack_sdk import WebClient
 
-from database import Message, create_session
-
-openai.api_key = os.getenv("OPENAI_API_KEY")
-slack_bot_token = os.getenv("SLACK_BOT_TOKEN")
-slack_app_token = os.getenv("SLACK_APP_TOKEN")
-
-bot_id = WebClient(token=slack_bot_token).auth_test()["user_id"]
+import simple_qa
+from constant import slack_app_token, slack_bot_token
+from database import create_session
 
 app = App(token=slack_bot_token)
 
 session = create_session()
 
-# MODEL_NAME = "gpt-3.5-turbo"
-# MODEL_MAX_TOKEN_LENGTH = 4097
-MODEL_NAME = "gpt-4"
-MODEL_MAX_TOKEN_LENGTH = 8192
-
-SYSTEM_PROMPT = f"""
-あなたは OpenAI API の {MODEL_NAME} モデルを利用した有能な Slack Bot です。
-あなたの Bot ID は {bot_id} です。
-"""
-
-
-def generate_answer(messages):
-    enc = tiktoken.encoding_for_model(MODEL_NAME)
-    input = [{"role": "system", "content": SYSTEM_PROMPT}]
-    total_token_length = len(enc.encode(SYSTEM_PROMPT))
-    for message in reversed(messages):
-        token_length = len(enc.encode(message.content))
-        # なぜかOpenAIサーバー側のトークンカウントと微妙に一致しないため、係数 0.9 を使う
-        if total_token_length + token_length > MODEL_MAX_TOKEN_LENGTH * 0.9:
-            break
-        input.insert(1, {"role": message.role, "content": message.content})
-        total_token_length += token_length
-    try:
-        completion = openai.ChatCompletion.create(model=MODEL_NAME, messages=input)
-        return completion.choices[0].message["content"]
-    except openai.error.InvalidRequestError as e:
-        return "OpenAI API に対する無効なリクエストです。\nエラー詳細: " + str(e)
-    except openai.error.APIError as e:
-        return "OpenAI API サーバーが API エラーを返しました。時間を置いて再度お試しください。\nエラー詳細: " + str(e)
-    except openai.error.RateLimitError as e:
-        return "OpenAI API サーバーがレート制限エラーを返しました。\nエラー詳細: " + str(e)
-    except Exception as e:
-        return "OpenAI API サーバーがエラーを返しました。\nエラー詳細: " + str(e)
-
 
 @app.event("app_mention")
 def handle_mentions(event, say):
-    channel_id = event["channel"]
-    thread_ts = event.get("thread_ts", event["ts"])
-    user_id = event["user"]
-    content = event["text"]
-    mentioned_users = re.findall(r"<@([A-Z0-9]+)>", content)
+    simple_qa.say_answer(event, say, session)
 
-    user_message = Message(
-        channel_id=channel_id,
-        thread_ts=thread_ts,
-        role="user",
-        sender=user_id,
-        # TODO: 複数ユーザーにメンションされた場合の処理は未検討
-        receiver=mentioned_users[0],
-        content=content,
-    )
-    session.add(user_message)
-    session.commit()
 
-    messages = (
-        session.query(Message)
-        .filter(Message.thread_ts == thread_ts)
-        .order_by(Message.id)
-        .all()
-    )
+@app.event("message")
+def handle_message(event, say):
+    # handle only for direct messages
+    if event.get("channel_type") != "im":
+        return
 
-    answer = generate_answer(messages)
-    say(text=answer, thread_ts=thread_ts)
-
-    assistant_message = Message(
-        channel_id=channel_id,
-        thread_ts=thread_ts,
-        role="assistant",
-        sender=bot_id,
-        receiver=user_id,
-        content=answer,
-    )
-    session.add(assistant_message)
-    session.commit()
+    simple_qa.say_answer(event, say, session)
 
 
 if __name__ == "__main__":
