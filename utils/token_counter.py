@@ -4,12 +4,14 @@
 from __future__ import annotations
 
 import logging
-from typing import List, Protocol, Union, overload
+from typing import List, Protocol, Union
 
 import tiktoken
 
 import database
 import models.message
+
+logger = logging.getLogger(__name__)
 
 
 class HasRoleAndContent(Protocol):
@@ -17,25 +19,9 @@ class HasRoleAndContent(Protocol):
     content: str
 
 
-logger = logging.getLogger(__name__)
-
-
-@overload
 def count_message_tokens(
-    messages: HasRoleAndContent, model: str = "gpt-3.5-turbo"
-) -> int:
-    ...
-
-
-@overload
-def count_message_tokens(
-    messages: List[HasRoleAndContent], model: str = "gpt-3.5-turbo"
-) -> int:
-    ...
-
-
-def count_message_tokens(
-    messages: HasRoleAndContent | List[HasRoleAndContent], model: str = "gpt-3.5-turbo"
+    messages: Union[HasRoleAndContent, List[HasRoleAndContent]],
+    model: str = "gpt-3.5-turbo",
 ) -> int:
     """
     Returns the number of tokens used by a list of messages.
@@ -63,8 +49,10 @@ def count_message_tokens(
         # tokens_per_name = 1
         encoding_model = "gpt-4"
     else:
+        supported_models = ["gpt-3.5-turbo", "gpt-4"]
         raise NotImplementedError(
             f"count_message_tokens() is not implemented for model {model}.\n"
+            f"Supported models are: {', '.join(supported_models)}\n"
             " See https://github.com/openai/openai-python/blob/main/chatml.md for"
             " information on how messages are converted to tokens."
         )
