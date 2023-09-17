@@ -5,6 +5,8 @@ from slack_sdk import WebClient
 
 # MODEL_NAME = "gpt-3.5-turbo"
 # MODEL_MAX_TOKEN_LENGTH = 4097
+
+# See https://platform.openai.com/docs/models/gpt-4
 MODEL_NAME = "gpt-4"
 MODEL_MAX_TOKEN_LENGTH = 8192
 

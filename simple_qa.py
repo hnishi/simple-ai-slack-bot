@@ -5,7 +5,7 @@ from constant import MODEL_MAX_TOKEN_LENGTH, MODEL_NAME, SYSTEM_PROMPT, bot_id
 from database import Message
 
 
-def generate_answer(messages):
+async def generate_answer(messages):
     enc = tiktoken.encoding_for_model(MODEL_NAME)
     input = [{"role": "system", "content": SYSTEM_PROMPT}]
     total_token_length = len(enc.encode(SYSTEM_PROMPT))
@@ -29,7 +29,7 @@ def generate_answer(messages):
         return "OpenAI API サーバーがエラーを返しました。\nエラー詳細: " + str(e)
 
 
-def say_answer(event, say, session):
+async def say_answer(event, say, session):
     channel_id = event["channel"]
     thread_ts = event.get("thread_ts", event["ts"])
     user_id = event["user"]
@@ -56,8 +56,8 @@ def say_answer(event, say, session):
         .all()
     )
 
-    answer = generate_answer(messages)
-    say(text=answer, thread_ts=thread_ts)
+    answer = await generate_answer(messages)
+    await say(text=answer, thread_ts=thread_ts)
 
     assistant_message = Message(
         channel_id=channel_id,
