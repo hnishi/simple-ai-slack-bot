@@ -4,7 +4,7 @@ from slack_bolt.adapter.socket_mode.async_handler import AsyncSocketModeHandler
 from slack_bolt.app.async_app import AsyncApp
 
 import simple_qa
-from constant import slack_app_token, slack_bot_token
+from configuration import slack_app_token, slack_bot_token
 from database import create_session
 
 app = AsyncApp(token=slack_bot_token)

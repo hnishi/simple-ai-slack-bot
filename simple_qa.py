@@ -1,11 +1,58 @@
+import re
+from typing import List, Optional, Union
+
 import openai
 import tiktoken
 
-from constant import MODEL_MAX_TOKEN_LENGTH, MODEL_NAME, SYSTEM_PROMPT, bot_id
-from database import Message
+import database
+import models.message
+from configuration import (
+    IS_MESSAGE_SAVE_ENABLED,
+    MODEL_MAX_TOKEN_LENGTH,
+    MODEL_NAME,
+    SYSTEM_PROMPT,
+    bot_id,
+    slack_client,
+)
 
 
-async def generate_answer(messages):
+def get_thread_messages(
+    channel_id: str, thread_ts: str
+) -> Optional[List[models.message.Message]]:
+    # https://api.slack.com/methods/conversations.replies
+    response = slack_client.conversations_replies(channel=channel_id, ts=thread_ts)
+
+    if not response["ok"]:
+        print("Error retrieving messages:", response["error"])
+        return
+
+    messages = response["messages"]
+
+    outputs = []
+    for message in messages:
+        if message.get("type") != "message":
+            continue
+
+        mentioned_users = re.findall(r"<@([A-Z0-9]+)>", message["text"])
+
+        role = "user" if message["user"] != bot_id else "assistant"
+
+        output = models.message.Message(
+            channel_id=channel_id,
+            thread_ts=thread_ts,
+            role=role,
+            sender=message["user"],
+            receiver=mentioned_users[0] if len(mentioned_users) > 0 else None,
+            content=message["text"],
+            timestamp=message["ts"],
+        )
+        outputs.append(output)
+    return outputs
+
+
+async def generate_answer(
+    messages: List[Union[database.Message, models.message.Message]]
+):
     enc = tiktoken.encoding_for_model(MODEL_NAME)
     input = [{"role": "system", "content": SYSTEM_PROMPT}]
     total_token_length = len(enc.encode(SYSTEM_PROMPT))
@@ -29,14 +76,14 @@ async def generate_answer(messages):
         return "OpenAI API サーバーがエラーを返しました。\nエラー詳細: " + str(e)
 
 
-async def say_answer(event, say, session):
+async def say_answer_with_sqlite(event, say, session):
     channel_id = event["channel"]
     thread_ts = event.get("thread_ts", event["ts"])
     user_id = event["user"]
     content = event["text"]
     # mentioned_users = re.findall(r"<@([A-Z0-9]+)>", content)
 
-    user_message = Message(
+    user_message = database.Message(
         channel_id=channel_id,
         thread_ts=thread_ts,
         role="user",
@@ -50,16 +97,16 @@ async def say_answer(event, say, session):
     session.commit()
 
     messages = (
-        session.query(Message)
-        .filter(Message.thread_ts == thread_ts)
-        .order_by(Message.id)
+        session.query(database.Message)
+        .filter(database.Message.thread_ts == thread_ts)
+        .order_by(database.Message.id)
         .all()
     )
 
     answer = await generate_answer(messages)
     await say(text=answer, thread_ts=thread_ts)
 
-    assistant_message = Message(
+    assistant_message = database.Message(
         channel_id=channel_id,
         thread_ts=thread_ts,
         role="assistant",
@@ -69,3 +116,21 @@ async def say_answer(event, say, session):
     )
     session.add(assistant_message)
     session.commit()
+
+
+async def say_answer_without_sqlite(event, say):
+    channel_id = event["channel"]
+    thread_ts = event.get("thread_ts", event["ts"])
+    # mentioned_users = re.findall(r"<@([A-Z0-9]+)>", content)
+
+    messages = get_thread_messages(channel_id, thread_ts)
+
+    answer = await generate_answer(messages)
+    await say(text=answer, thread_ts=thread_ts)
+
+
+async def say_answer(event, say, session):
+    if IS_MESSAGE_SAVE_ENABLED:
+        await say_answer_with_sqlite(event, say, session)
+    else:
+        await say_answer_without_sqlite(event, say)
