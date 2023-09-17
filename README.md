@@ -61,7 +61,7 @@ You can talk to the bot without mentioning it.
 1. Install the required packages
 
     ```shell
-    poetry install
+    poetry install --no-root
     ```
 
 ## App Configuration
@@ -87,6 +87,26 @@ You can talk to the bot without mentioning it.
     ```shell
     poetry run python app.py
     ```
+
+## Docker
+
+### Build
+
+```shell
+docker build -t simple-ai-slack-bot .
+```
+
+### Run
+
+```shell
+docker run -it simple-ai-slack-bot
+```
+
+### docker compose
+
+```shell
+docker-compose up
+```
 
 ## References
 
