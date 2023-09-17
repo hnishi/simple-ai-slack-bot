@@ -4,27 +4,38 @@
 from __future__ import annotations
 
 import logging
-from typing import List, overload
+from typing import List, Protocol, Union, overload
 
 import tiktoken
 
-from models.message import Message
+import database
+import models.message
+
+
+class HasRoleAndContent(Protocol):
+    role: str
+    content: str
+
 
 logger = logging.getLogger(__name__)
 
 
 @overload
-def count_message_tokens(messages: Message, model: str = "gpt-3.5-turbo") -> int:
+def count_message_tokens(
+    messages: HasRoleAndContent, model: str = "gpt-3.5-turbo"
+) -> int:
     ...
 
 
 @overload
-def count_message_tokens(messages: List[Message], model: str = "gpt-3.5-turbo") -> int:
+def count_message_tokens(
+    messages: List[HasRoleAndContent], model: str = "gpt-3.5-turbo"
+) -> int:
     ...
 
 
 def count_message_tokens(
-    messages: Message | List[Message], model: str = "gpt-3.5-turbo"
+    messages: HasRoleAndContent | List[HasRoleAndContent], model: str = "gpt-3.5-turbo"
 ) -> int:
     """
     Returns the number of tokens used by a list of messages.
@@ -38,7 +49,7 @@ def count_message_tokens(
     Returns:
         int: The number of tokens used by the list of messages.
     """
-    if isinstance(messages, Message):
+    if isinstance(messages, Union[database.Message, models.message.Message]):
         messages = [messages]
 
     if model.startswith("gpt-3.5-turbo"):

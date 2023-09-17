@@ -2,7 +2,6 @@ import re
 from typing import List, Optional, Union
 
 import openai
-import tiktoken
 from slack_sdk.errors import SlackApiError
 
 import database
@@ -15,6 +14,7 @@ from configuration import (
     bot_id,
     slack_client,
 )
+from utils.token_counter import count_message_tokens
 
 
 def get_thread_messages(
@@ -58,13 +58,16 @@ def get_thread_messages(
 async def generate_answer(
     messages: List[Union[database.Message, models.message.Message]]
 ):
-    enc = tiktoken.encoding_for_model(MODEL_NAME)
     input = [{"role": "system", "content": SYSTEM_PROMPT}]
-    total_token_length = len(enc.encode(SYSTEM_PROMPT))
+
+    class system_message:
+        role = "system"
+        content = SYSTEM_PROMPT
+
+    total_token_length = count_message_tokens([system_message()], MODEL_NAME)
     for message in reversed(messages):
-        token_length = len(enc.encode(message.content))
-        # なぜかOpenAIサーバー側のトークンカウントと微妙に一致しないため、係数 0.9 を使う
-        if total_token_length + token_length > MODEL_MAX_TOKEN_LENGTH * 0.9:
+        token_length = count_message_tokens(message, MODEL_NAME)
+        if total_token_length + token_length > MODEL_MAX_TOKEN_LENGTH:
             break
         input.insert(1, {"role": message.role, "content": message.content})
         total_token_length += token_length

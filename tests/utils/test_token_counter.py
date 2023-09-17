@@ -3,7 +3,7 @@
 import pytest
 
 from models.message import Message
-from utils.token_counter import count_message_tokens
+from utils.token_counter import count_message_tokens, count_string_tokens
 
 default_arguments = {
     "channel_id": "C01U6P7LZ8G",
@@ -43,3 +43,23 @@ def test_count_message_tokens_gpt_4():
         Message(role="assistant", content="Hi there!", **default_arguments),
     ]
     assert count_message_tokens(messages, model="gpt-4-0314") == 15
+
+
+def test_count_string_tokens():
+    """Test that the string tokens are counted correctly."""
+
+    string = "Hello, world!"
+    assert count_string_tokens(string, model_name="gpt-3.5-turbo-0301") == 4
+
+
+def test_count_string_tokens_empty_input():
+    """Test that the string tokens are counted correctly."""
+
+    assert count_string_tokens("", model_name="gpt-3.5-turbo-0301") == 0
+
+
+def test_count_string_tokens_gpt_4():
+    """Test that the string tokens are counted correctly."""
+
+    string = "Hello, world!"
+    assert count_string_tokens(string, model_name="gpt-4-0314") == 4
