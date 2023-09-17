@@ -1,82 +1,29 @@
-import os
-import re
 import asyncio
 
-from slack_sdk import WebClient
-from slack_bolt.app.async_app import AsyncApp
 from slack_bolt.adapter.socket_mode.async_handler import AsyncSocketModeHandler
-import openai
+from slack_bolt.app.async_app import AsyncApp
 
-from database import create_session, Message
-
-openai.api_key = os.getenv("OPENAI_API_KEY")
-slack_bot_token = os.getenv("SLACK_BOT_TOKEN")
-slack_app_token = os.getenv("SLACK_APP_TOKEN")
-
-bot_id = WebClient(token=slack_bot_token).auth_test()["user_id"]
+import simple_qa
+from constant import slack_app_token, slack_bot_token
+from database import create_session
 
 app = AsyncApp(token=slack_bot_token)
 
 session = create_session()
 
-MODEL_NAME = "gpt-3.5-turbo"
-
-SYSTEM_PROMPT = """
-あなたは有能な Slack Bot です。
-以後、スレッドのメッセージが全て渡されます。
-最後のメッセージに対して応答してください。
-"""
-
-
-async def generate_answer(messages):
-    input = [{"role": "system", "content": SYSTEM_PROMPT}]
-    for message in messages:
-        input.append({"role": message.role, "content": message.content})
-
-    completion = await openai.ChatCompletion.acreate(model=MODEL_NAME, messages=input)
-    return completion.choices[0].message["content"]
-
 
 @app.event("app_mention")
 async def handle_mentions(event, say):
-    channel_id = event["channel"]
-    thread_ts = event.get("thread_ts", event["ts"])
-    user_id = event["user"]
-    content = event["text"]
-    mentioned_users = re.findall(r"<@([A-Z0-9]+)>", content)
+    await simple_qa.say_answer(event, say, session)
 
-    user_message = Message(
-        channel_id=channel_id,
-        thread_ts=thread_ts,
-        role="user",
-        sender=user_id,
-        # TODO: 複数ユーザーにメンションされた場合の処理は未検討
-        receiver=mentioned_users[0],
-        content=content,
-    )
-    session.add(user_message)
-    session.commit()
 
-    messages = (
-        session.query(Message)
-        .filter(Message.thread_ts == thread_ts)
-        .order_by(Message.id)
-        .all()
-    )
+@app.event("message")
+async def handle_message(event, say):
+    # handle only for direct messages
+    if event.get("channel_type") != "im":
+        return
 
-    answer = await generate_answer(messages)
-    await say(text=answer, thread_ts=thread_ts)
-
-    assistant_message = Message(
-        channel_id=channel_id,
-        thread_ts=thread_ts,
-        role="assistant",
-        sender=bot_id,
-        receiver=user_id,
-        content=answer,
-    )
-    session.add(assistant_message)
-    session.commit()
+    await simple_qa.say_answer(event, say, session)
 
 
 async def main():

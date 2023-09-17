@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, text
+from sqlalchemy import Column, DateTime, Integer, String, create_engine, text
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 Base = declarative_base()
