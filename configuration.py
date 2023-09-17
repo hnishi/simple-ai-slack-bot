@@ -4,7 +4,10 @@ import openai
 from dotenv import load_dotenv
 from slack_sdk import WebClient
 
-load_dotenv()
+if os.path.exists(".env"):
+    load_dotenv(".env")
+else:
+    raise FileNotFoundError("No .env file found. Please create one.")
 
 IS_MESSAGE_SAVE_ENABLED = False  # Save messages to sqlite database
 
