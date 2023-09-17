@@ -1,5 +1,7 @@
 # gpt-slack-bot
 
+Simple Slack bot using OpenAI Chat API.
+
 You can talk to the chat bot using OpenAI Chat API via Slack.
 
 ## Features
@@ -85,3 +87,4 @@ You can talk to the bot without mentioning it.
 
 - [Slack | Bolt for Python](https://slack.dev/bolt-python/concepts)
 - [GitHub - openai/openai-python: The OpenAI Python library provides convenient access to the OpenAI API from applications written in the Python language.](https://github.com/openai/openai-python)
+- [OpenAI API Documentation](https://platform.openai.com/docs/introduction)
