@@ -52,24 +52,27 @@ You can talk to the bot without mentioning it.
 
 ## Prerequisites
 
-1. [Recommended] Create a Python virtual environment
+1. Poetry
 
-    Using a Python virtual environment is recommended for isolating dependencies.
+    Poetry is used to manage the dependencies.
 
-    ```shell
-    python -m venv .venv
-    source .venv/bin/activate
-    ```
+    See https://python-poetry.org/docs/#installation
 
 1. Install the required packages
 
     ```shell
-    pip install -r requirements.txt
+    poetry install
     ```
 
 ## App Configuration
 
-1. Set the necessary environment variables
+1. Create the `.env` file
+
+    ```shell
+    cp .env.sample .env
+    ```
+
+1. Set the necessary environment variables in the `.env` file
 
     ```shell
     export SLACK_BOT_TOKEN=xoxb-xxx
@@ -82,7 +85,7 @@ You can talk to the bot without mentioning it.
 1. Run the application
 
     ```shell
-    python app.py
+    poetry run python app.py
     ```
 
 ## References

@@ -1,7 +1,10 @@
 import os
 
 import openai
+from dotenv import load_dotenv
 from slack_sdk import WebClient
+
+load_dotenv()
 
 IS_MESSAGE_SAVE_ENABLED = False  # Save messages to sqlite database
 
