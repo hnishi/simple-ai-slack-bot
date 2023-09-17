@@ -3,6 +3,7 @@ from typing import List, Optional, Union
 
 import openai
 import tiktoken
+from slack_sdk.errors import SlackApiError
 
 import database
 import models.message
@@ -19,35 +20,39 @@ from configuration import (
 def get_thread_messages(
     channel_id: str, thread_ts: str
 ) -> Optional[List[models.message.Message]]:
-    # https://api.slack.com/methods/conversations.replies
-    response = slack_client.conversations_replies(channel=channel_id, ts=thread_ts)
+    try:
+        # https://api.slack.com/methods/conversations.replies
+        response = slack_client.conversations_replies(channel=channel_id, ts=thread_ts)
 
-    if not response["ok"]:
-        print("Error retrieving messages:", response["error"])
+        if not response["ok"]:
+            print("Error retrieving messages:", response["error"])
+            return
+
+        messages = response["messages"]
+
+        outputs = []
+        for message in messages:
+            if message.get("type") != "message":
+                continue
+
+            mentioned_users = re.findall(r"<@([A-Z0-9]+)>", message["text"])
+
+            role = "user" if message["user"] != bot_id else "assistant"
+
+            output = models.message.Message(
+                channel_id=channel_id,
+                thread_ts=thread_ts,
+                role=role,
+                sender=message["user"],
+                receiver=mentioned_users[0] if len(mentioned_users) > 0 else None,
+                content=message["text"],
+                timestamp=message["ts"],
+            )
+            outputs.append(output)
+        return outputs
+    except SlackApiError as e:
+        print(f"Error: {e.response['error']}")
         return
-
-    messages = response["messages"]
-
-    outputs = []
-    for message in messages:
-        if message.get("type") != "message":
-            continue
-
-        mentioned_users = re.findall(r"<@([A-Z0-9]+)>", message["text"])
-
-        role = "user" if message["user"] != bot_id else "assistant"
-
-        output = models.message.Message(
-            channel_id=channel_id,
-            thread_ts=thread_ts,
-            role=role,
-            sender=message["user"],
-            receiver=mentioned_users[0] if len(mentioned_users) > 0 else None,
-            content=message["text"],
-            timestamp=message["ts"],
-        )
-        outputs.append(output)
-    return outputs
 
 
 async def generate_answer(
