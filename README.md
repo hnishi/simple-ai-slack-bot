@@ -4,15 +4,19 @@ Simple Slack bot using OpenAI Chat API.
 
 You can talk to the chat bot using OpenAI Chat API via Slack.
 
-## Features
+## Usage in Slack
 
 ### Public and private channels in which the bot is added
 
 You have to mention the bot to talk to it.
 
+![screenshot](attachments/2023-09-17-19-18-49.png)
+
 ### Direct messages to the bot
 
 You can talk to the bot without mentioning it.
+
+![screenshot](attachments/2023-09-17-19-18-15.png)
 
 ## Slack App Configuration
 
@@ -46,9 +50,7 @@ You can talk to the bot without mentioning it.
     - App Home --> Show Tabs --> Messages Tab
     - Check `Allow users to send Slash commands and messages from the messages tab`
 
-## Usage
-
-### Prerequisites
+## Prerequisites
 
 1. [Recommended] Create a Python virtual environment
 
@@ -65,7 +67,7 @@ You can talk to the bot without mentioning it.
     pip install -r requirements.txt
     ```
 
-### Configuration
+## App Configuration
 
 1. Set the necessary environment variables
 
@@ -75,7 +77,7 @@ You can talk to the bot without mentioning it.
     export OPENAI_API_KEY=sk-xxx
     ```
 
-### Running the application
+## Running the application
 
 1. Run the application
 
