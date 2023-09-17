@@ -1,6 +1,6 @@
-# gpt-slack-bot
+# simple-ai-slack-bot
 
-Simple Slack bot using OpenAI Chat API.
+Simple Slack bot powered by OpenAI Chat API.
 
 You can talk to the chat bot using OpenAI Chat API via Slack.
 
