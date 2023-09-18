@@ -75,9 +75,9 @@ You can talk to the bot without mentioning it.
 1. Set the necessary environment variables in the `.env` file
 
     ```shell
-    export SLACK_BOT_TOKEN=xoxb-xxx
-    export SLACK_APP_TOKEN=xapp-xxx
-    export OPENAI_API_KEY=sk-xxx
+    SLACK_BOT_TOKEN=xoxb-xxx
+    SLACK_APP_TOKEN=xapp-xxx
+    OPENAI_API_KEY=sk-xxx
     ```
 
 ## Running the application
