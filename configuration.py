@@ -1,8 +1,12 @@
+import logging
 import os
 
 import openai
 from dotenv import load_dotenv
 from slack_sdk import WebClient
+
+logger = logging.getLogger(__name__)
+
 
 if os.path.exists(".env"):
     load_dotenv(".env")
@@ -11,7 +15,16 @@ else:
 
 IS_MESSAGE_SAVE_ENABLED = False  # Save messages to sqlite database
 
-MODEL_NAME = os.getenv("MODEL_NAME", "gpt-3.5-turbo")
+SUPPORTED_MODELS = ["gpt-3.5-turbo", "gpt-4"]
+
+MODEL_NAME = os.getenv("MODEL_NAME")
+
+if MODEL_NAME not in SUPPORTED_MODELS:
+    logger.warning(
+        f"Unknown model {MODEL_NAME} is provided. Falling back to 'gpt-3.5-turbo'."
+        " Supported models are: {SUPPORTED_MODELS}"
+    )
+    MODEL_NAME = "gpt-3.5-turbo"
 
 # See https://platform.openai.com/docs/models/gpt-4
 if MODEL_NAME.startswith("gpt-4"):
