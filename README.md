@@ -78,7 +78,11 @@ You can talk to the bot without mentioning it.
     SLACK_BOT_TOKEN=xoxb-xxx
     SLACK_APP_TOKEN=xapp-xxx
     OPENAI_API_KEY=sk-xxx
+    OPENAI_ORGANIZATION=org-xxx  # this parameter is optional
+    MODEL_NAME=gpt-3.5-turbo
     ```
+
+    For model name, see https://platform.openai.com/docs/models/overview
 
 ## Running the application
 

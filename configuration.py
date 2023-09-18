@@ -11,12 +11,19 @@ else:
 
 IS_MESSAGE_SAVE_ENABLED = False  # Save messages to sqlite database
 
-# MODEL_NAME = "gpt-3.5-turbo"
-# MODEL_MAX_TOKEN_LENGTH = 4097
+MODEL_NAME = os.getenv("MODEL_NAME", "gpt-3.5-turbo")
 
 # See https://platform.openai.com/docs/models/gpt-4
-MODEL_NAME = "gpt-4"
-MODEL_MAX_TOKEN_LENGTH = 8192
+if MODEL_NAME.startswith("gpt-4"):
+    MODEL_MAX_TOKEN_LENGTH = 8192
+elif MODEL_NAME.startswith("gpt-3.5-turbo"):
+    MODEL_MAX_TOKEN_LENGTH = 4097
+else:
+    supported_models = ["gpt-3.5-turbo", "gpt-4"]
+    raise NotImplementedError(
+        f"Unknown model {MODEL_NAME} is provided.\n"
+        f"Supported models are: {', '.join(supported_models)}"
+    )
 
 SYSTEM_PROMPT = f"""
 あなたは OpenAI API の {MODEL_NAME} モデルを利用した Slack Bot です。
