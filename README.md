@@ -35,6 +35,8 @@ You can talk to the bot without mentioning it.
     - im:history
     - im:read
     - im:write
+    - channels:history
+    - groups:history
 
 1. App Token Scopes
 
